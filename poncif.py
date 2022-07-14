@@ -33,7 +33,7 @@ def app():
             st.header("Configuration")
             st.session_state["background_image"]    = st.file_uploader("Image :", type=["png", "jpg"])
             st.session_state["drawing_mode"]        = st.selectbox("Mode :", ("Dessin", "Gomme"), 0)
-            st.session_state["stroke_width"]        = st.slider("Epaisseur :", 1, 5, 3)
+            st.session_state["stroke_width"]        = st.slider("Epaisseur :", 1, 20, 3)
             st.session_state["high_threshold"]      = st.slider("Seuil haut :", 0, 500, 300)
             st.session_state["low_threshold"]       = st.slider("Seuil bas :", 0, 500, 100)
             if "previous_thresholds" not in st.session_state:
@@ -63,7 +63,7 @@ def app():
                 canvas_result = st_canvas(
                     background_image = bg_resized,
                     stroke_width = st.session_state["stroke_width"],
-                    stroke_color = "#ffffff" if st.session_state["drawing_mode"] == "Gomme" else "#000000",
+                    stroke_color = "#ffff00" if st.session_state["drawing_mode"] == "Gomme" else "#000000",
                     height = st.session_state["h"],
                     width = st.session_state["w"],
                     initial_drawing = st.session_state["contours"] if "contours" in st.session_state else None,
@@ -75,7 +75,7 @@ def app():
                 print("No image loaded. Loading empty canvas.")
 
                 canvas_result = st_canvas(
-                    stroke_width = st.session_state["stroke_width"],
+                    stroke_width = st.session_state["stroke_width"] if "stroke_width" in st.session_state else 3,
                     height = 600,
                     width = 1000,
                     update_streamlit = True
@@ -87,12 +87,14 @@ def app():
             # If there are already contours then add the drawn ones and update
             if "contours" in st.session_state and canvas_result.json_data:
                 st.session_state["contours"] = add_path_no_duplicate(st.session_state["contours"], canvas_result.json_data)
+                # print(st.session_state["contours"])
         
         # If the drawing mode is eraser then find the contour close to the eraser and delete them
         if st.session_state["drawing_mode"] == "Gomme":
         # If there are already contours then add the drawn ones and update
-            pass
-            
+            if "contours" in st.session_state and canvas_result.json_data:
+                st.session_state["contours"] = remove_path_too_close(st.session_state["contours"], canvas_result.json_data, st.session_state["stroke_width"])
+                # print(st.session_state["contours"])            
         with col3:
             st.form_submit_button('Appliquer les changements')
 

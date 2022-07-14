@@ -52,7 +52,26 @@ def add_path_no_duplicate(a, b):
     else:
         return(None)
 
+def remove_path_too_close(a, b, dist=10):
+    """
+    Remove paths from a that are too close to b (less than dist)
+    """
+    if a and b:
+        for a_path in a["objects"]:
+            for b_path in b["objects"]:
+                if b_path["stroke"] == "#ffff00":
+                    for i in range(len(a_path["path"])):
+                        for j in range(len(b_path["path"])):
+                            if ((a_path["path"][i][-2] - b_path["path"][j][-2])**2 + (a_path["path"][i][-1] - b_path["path"][j][-1])**2) < dist **2:
+                                a_path["path"][i] = ['M', a_path["path"][i][-2], a_path["path"][i][-1]]
+                else:
+                    continue
+        return(a)
+    else:
+        return(None)
+
 if __name__=="__main__":
-    a = {"objects":[{"path": [1, 2]}, {"path": [2, 3]}, {"path": [3, 4]}]}    
-    b = {"objects":[{"path": [2, 2]}, {"path": [3, 3]}, {"path": [3, 4]}]}
-    print(add_path_no_duplicate(a, b))
+    a = {'version': '4.4.0', 'objects': [{'type': 'path', 'version': '4.4.0', 'originX': 'left', 'originY': 'top', 'left': 176.5, 'top': 83.5, 'width': 202.01, 'height': 17, 'fill': None, 'stroke': '#000000', 'strokeWidth': 3, 'strokeDashArray': None, 'strokeLineCap': 'round', 'strokeDashOffset': 0, 'strokeLineJoin': 'round', 'strokeUniform': False, 'strokeMiterLimit': 10, 'scaleX': 1, 'scaleY': 1, 'angle': 0, 'flipX': False, 'flipY': False, 'opacity': 1, 'shadow': None, 'visible': True, 'backgroundColor': '', 'fillRule': 'nonzero', 'paintFirst': 'fill', 'globalCompositeOperation': 'source-over', 'skewX': 0, 'skewY': 0, 'path': [['M', 177.997, 84.997], ['Q', 178, 85, 180, 86], ['Q', 182, 87, 192.5, 89.5], ['Q', 203, 92, 214, 93.5], ['Q', 225, 95, 232.5, 96], ['Q', 240, 97, 253.5, 97.5], ['Q', 267, 98, 289.5, 99], ['Q', 312, 100, 316, 100], ['Q', 320, 100, 327, 100.5], ['Q', 334, 101, 343, 101], ['Q', 352, 101, 360.5, 101.5], ['Q', 369, 102, 371, 102], ['Q', 373, 102, 374.5, 102], ['Q', 376, 102, 377, 102], ['Q', 378, 102, 379, 102], ['L', 380.003, 102]]}], 'background': ''}  
+    b = {'version': '4.4.0', 'objects': [{'type': 'path', 'version': '4.4.0', 'originX': 'left', 'originY': 'top', 'left': 268.5, 'top': 89.5, 'width': 47.01, 'height': 5, 'fill': None, 'stroke': '#000000', 'strokeWidth': 3, 'strokeDashArray': None, 'strokeLineCap': 'round', 'strokeDashOffset': 0, 'strokeLineJoin': 'round', 'strokeUniform': False, 'strokeMiterLimit': 10, 'scaleX': 1, 'scaleY': 1, 'angle': 0, 'flipX': False, 'flipY': False, 'opacity': 1, 'shadow': None, 'visible': True, 'backgroundColor': '', 'fillRule': 'nonzero', 'paintFirst': 'fill', 'globalCompositeOperation': 'source-over', 'skewX': 0, 'skewY': 0, 'path': [['M', 269.997, 91], ['Q', 270, 91, 270.5, 91], ['Q', 271, 91, 271.5, 91], ['Q', 272, 91, 272.5, 91], ['Q', 273, 91, 273.5, 91], ['Q', 274, 91, 274.5, 91], ['Q', 275, 91, 275.5, 91], ['Q', 276, 91, 276.5, 91], ['Q', 277, 91, 277.5, 91], ['Q', 278, 91, 279, 91], ['Q', 280, 91, 280.5, 91], ['Q', 281, 91, 281.5, 91], ['Q', 282, 91, 282.5, 91], ['Q', 283, 91, 283.5, 91], ['Q', 284, 91, 284.5, 91], ['Q', 285, 91, 285.5, 91], ['Q', 286, 91, 286.5, 91], ['Q', 287, 91, 287.5, 91], ['Q', 288, 91, 288.5, 91], ['Q', 289, 91, 289.5, 91], ['Q', 290, 91, 290.5, 91], ['Q', 291, 91, 291.5, 91], ['Q', 292, 91, 292.5, 91], ['Q', 293, 91, 293.5, 91], ['Q', 294, 91, 294.5, 91], ['Q', 295, 91, 295.5, 91], ['Q', 296, 91, 296.5, 91], ['Q', 297, 91, 297.5, 91], ['Q', 298, 91, 298.5, 91.5], ['Q', 299, 92, 299.5, 92], ['Q', 300, 92, 300.5, 92], ['Q', 301, 92, 301.5, 92], ['Q', 302, 92, 303, 92.5], ['Q', 304, 93, 304, 93.5], ['Q', 304, 94, 304.5, 94], ['Q', 305, 94, 305.5, 94], ['Q', 306, 94, 306.5, 94], ['Q', 307, 94, 307.5, 94], ['Q', 308, 94, 308.5, 94], ['Q', 309, 94, 309.5, 94.5], ['Q', 310, 95, 310.5, 95], ['Q', 311, 95, 311.5, 95], ['Q', 312, 95, 312.5, 95], ['Q', 313, 95, 313.5, 95], ['Q', 314, 95, 315, 95.5], ['Q', 316, 96, 316.5, 96], ['L', 317.003, 96]]}
+], 'background': ''} 
+    print(remove_path_too_close(a, b))
