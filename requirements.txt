@@ -1,0 +1,4 @@
+customtkinter==4.6.3
+darkdetect==0.7.1
+Pillow==9.2.0
+tk==0.1.0
