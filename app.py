@@ -9,14 +9,27 @@ logging.basicConfig(level=logging.INFO)
 
 class Poncif_design_tool(tk.Tk):
     def __init__(self, *args, **kwargs):
+        # Parent class __init__
         tk.Tk.__init__(self, *args, **kwargs)
+
+        # General variables init
         self.attributes("-fullscreen", True)
         self.bind('<Escape>', lambda event:self.close())
         # self.attributes("-zoomed", True)
+
+        # Define the closing method
+        # The closing method must implement the robot closing method
         self.protocol("WM_DELETE_WINDOW", self.close)
-        self.image_path = "Poncif_Design_Tool.png"
+
+        # Title of the window
         self.title("✏️ Poncif Design Tool")
 
+        # Default picture
+        # TODO : change the default picture to a more explicit one
+        self.default_image_path = "Poncif_Design_Tool.png"
+
+        # Define the general layout
+        # A grid of 2 columns x 6 rows
         self.content = ctk.CTkFrame(self)
         self.content.pack(side="top", fill="both", expand=True)
         self.content.columnconfigure(0, weight=8)
@@ -28,8 +41,8 @@ class Poncif_design_tool(tk.Tk):
         self.content.rowconfigure(4, weight=1)
         self.content.rowconfigure(5, weight=1)
 
-        self.load_image_button = ctk.CTkButton(master=self.content, text="Choose an image", border_width=2, command=self.load_image)
-        self.load_image_button.grid(column=1, row=0, sticky="nsew")
+        # Define button to load an image
+        load_image_button = ctk.CTkButton(master=self.content, text="Choose an image", border_width=2, command=self.load_image).grid(column=1, row=0, sticky="nsew")
 
         self.select_canny_frame = ctk.CTkFrame(master=self.content)
         self.select_canny_frame.grid(column=1, row=1, sticky="nsew")
@@ -154,12 +167,12 @@ class Poncif_design_tool(tk.Tk):
     def compute_canny_contours(self, value):
         logging.info(f"Canny parameters : {value}")
         self.image_canvas.delete("contours")
-        self.contours_dict = get_contours_dict(self.pil_poncif_image, self.canny_low_threshold.get(), self.canny_high_threshold.get())
-        for _, path in self.contours_dict.items():
-            if len(path)>2:
-                self.image_canvas.create_line(*path, tags="contours", fill="red", width=5)
-            else:
-                pass
+        self.contours = get_contours(self.pil_poncif_image, self.canny_low_threshold.get(), self.canny_high_threshold.get(), sampling=10)
+        self.contours = prune_contours(self.contours, min_dist=10)
+        for path in self.contours:
+            _ = input("Next contour ?")
+            for point in path:
+                self.image_canvas.create_oval(point[0]-2, point[1]-2, point[0]+2, point[1]+2, fill="red", outline="red", tags="contours")
 
     def select_tool(self):
         logging.info(f"Selected tool : {self.tool_var.get()}")
@@ -191,18 +204,52 @@ def get_target_size(size, container_size):
     target_size = [int(size[0] * ratio), int(size[1] * ratio)]
     return(target_size)
 
-def get_contours(image, low_threshold=300, high_threshold=400):
+def get_contours(image, low_threshold=300, high_threshold=400, sampling=100):
     print(f"Computing contour with {low_threshold = } and {high_threshold = }")
     img_array = np.array(image)
     img = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
     canny = cv2.Canny(img, low_threshold, high_threshold, edges=True, L2gradient=True)
     contours, _ = cv2.findContours(canny, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    points = [[contour[i][0] for i in range(0, len(contour), sampling)] for contour in contours]
+    print(len(contours))
+    return(points)
+
+def prune_contours(contours, min_dist=10):
+    """
+    remove points too close to other contours
+    """
+    mmc = []
+    for contour in contours:
+        min_coor_x = min([p[0] for p in contour])
+        max_coor_x = max([p[0] for p in contour])
+        min_coor_y = min([p[1] for p in contour])
+        max_coor_y = max([p[1] for p in contour])
+        mmc.append([min_coor_x, max_coor_x, min_coor_y, max_coor_y])
+    for i in range(len(contours)):
+        for j in range(i):
+            if mmc[i][0]>=(mmc[j][1] - min_dist) or mmc[j][0]>=(mmc[i][1] - min_dist) or mmc[i][2]>=(mmc[j][3] - min_dist) or mmc[j][2]>=(mmc[i][3] - min_dist):
+                continue
+            else:
+                new_contour = []
+                for p in contours[i]:
+                    try:
+                        test = min([distance(*p, *q) for q in contours[j]])
+                        if test > min_dist:
+                            new_contour.append(p)
+                        else:
+                            print("too close")
+                    except:
+                        pass
+                contours[i] = new_contour
     return(contours)
 
 def get_contours_dict(image, low_threshold = 300, high_threshold = 400, scale=1, sampling=1):
     contours = get_contours(image, low_threshold, high_threshold)
     contours_dict = {i:[(contours[i][j][0]*scale).tolist() for j in range(0, len(contours[i]), sampling)] for i in range(len(contours))}
     return(contours_dict)
+
+def distance(a, b, c, d):
+    return(pow((a-c)**2 + (b-d)**2, 0.5))
 
 app = Poncif_design_tool()
 
