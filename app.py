@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import logging
 from copy import deepcopy
+from pyaxidraw import axidraw  
 logging.basicConfig(level=logging.INFO)
 
 class Poncif_design_tool(tk.Tk):
@@ -14,9 +15,9 @@ class Poncif_design_tool(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
 
         # General variables init
-        self.attributes("-fullscreen", True)
+        # self.attributes("-fullscreen", True)
         self.bind('<Escape>', lambda event:self.close())
-        # self.attributes("-zoomed", True)
+        self.attributes("-zoomed", True)
 
         # Define the closing method
         # The closing method must implement the robot closing method
@@ -146,6 +147,7 @@ class Poncif_design_tool(tk.Tk):
         self.poncif_image = ImageTk.PhotoImage(self.pil_poncif_image)
         self.image_canvas.create_image(0, 0, image=self.poncif_image, anchor="nw", tags="image")
 
+        self.drawing_coordinates = None
         self.image_canvas.bind('<Motion>', self.draw)
         self.image_canvas.bind('<ButtonPress-1>', self.click)
         self.image_canvas.bind('<ButtonRelease-1>', self.release)
@@ -154,24 +156,28 @@ class Poncif_design_tool(tk.Tk):
         if self.clicked:
             if self.tool_var.get() == 0:
                 # Pen mode
-                try:
+                # try:
+                if self.drawing_coordinates:
+                    self.drawing_distance += distance(self.drawing_coordinates, [event.x, event.y])
                     # coordinates exist
-                    self.image_canvas.create_line(*self.drawing_coordinates, event.x, event.y, width=2, tags="contours", fill="red")
+                    if self.drawing_distance > 10:
+                        self.image_canvas.create_oval(event.x-2, event.y-2, event.x+2, event.y+2, width=2, tags="contours", outline="red", fill="red")
+                        self.drawing_distance = 0
                     self.drawing_coordinates = [event.x, event.y]
-                except:
+                else:
                     logging.info(f"Failed drawing")
                     self.drawing_coordinates = [event.x, event.y]
             elif self.tool_var.get() == 1:
                 # Eraser mode
-                try:
+                # if self.drawing_coordinates:
                     # coordinates exist
                     # print(self.image_canvas.find_overlapping(event.x - 5, event.y - 5, event.x + 5, event.y +5))
-                    for contour in self.image_canvas.find_overlapping(event.x - 5, event.y - 5, event.x + 5, event.y +5):
-                        if "contours" in self.image_canvas.gettags(contour):
-                            self.image_canvas.delete(contour)
-                except:
-                    logging.info(f"Failed erasing")
-                    self.drawing_coordinates = [event.x, event.y]
+                for contour in self.image_canvas.find_overlapping(event.x - 5, event.y - 5, event.x + 5, event.y +5):
+                    if "contours" in self.image_canvas.gettags(contour):
+                        self.image_canvas.delete(contour)
+                # else:
+                #     logging.info(f"Failed erasing")
+                #     self.drawing_coordinates = [event.x, event.y]
             else:
                 logging.info(f"Invalid tool")
         else:
@@ -179,12 +185,30 @@ class Poncif_design_tool(tk.Tk):
 
     def click(self, _):
         self.clicked = True
+        self.drawing_distance = 0
     
     def release(self, _):
         self.clicked = False
         self.drawing_coordinates = None
+        self.drawing_distance = 0
 
     def start(self):
+        self.ad = axidraw.AxiDraw()
+        self.ad.interactive()
+        connected = self.ad.connect()
+        self.ad.options.units = 2
+        self.ad.update() 
+        if not connected:
+            print(f"Not connected")
+        for i in self.image_canvas.find_withtag("contours"):
+            coords = self.image_canvas.coords(i)
+            # Find the coordinates in real mm values
+            print(f"Target size {self.target_size}")
+            point = ((coords[0]+2)*self.width.get()/self.target_size[0], (coords[1]+2)*self.height.get()/self.target_size[1])
+            self.ad.goto(*point)
+            self.ad.pendown()
+            self.ad.penup()
+            # Pierce hole
         logging.info(f"Start drilling the holes")
 
     def load_image(self):
@@ -194,8 +218,8 @@ class Poncif_design_tool(tk.Tk):
         self.image_canvas.delete("all")
 
         self.pil_poncif_image = Image.open(image_path)
-        target_size = get_target_size(self.pil_poncif_image.size, (self.image_canvas.winfo_width(), self.image_canvas.winfo_height()))
-        self.pil_poncif_image = self.pil_poncif_image.resize(target_size, Image.Resampling.LANCZOS)
+        self.target_size = get_target_size(self.pil_poncif_image.size, (self.image_canvas.winfo_width(), self.image_canvas.winfo_height()))
+        self.pil_poncif_image = self.pil_poncif_image.resize(self.target_size, Image.Resampling.LANCZOS)
 
         logging.info(f"Canvas dimensions : {self.image_canvas.winfo_width()}x{self.image_canvas.winfo_height()}")
         logging.info(f"Image dimensions : {self.pil_poncif_image.size[0]}x{self.pil_poncif_image.size[1]}")
@@ -223,6 +247,10 @@ class Poncif_design_tool(tk.Tk):
         logging.info(f"Selected tool : {self.tool_var.get()}")
 
     def close(self):
+        try:
+            self.ad.disconnect()
+        except:
+            pass
         logging.info(f"Closing")
         self.destroy()
 
@@ -257,8 +285,6 @@ def prune_contours(contours, min_dist=10):
     """
     # Compute the general location of each path
     mmc = [[min([p[0] for p in path]), max([p[0] for p in path]), min([p[1] for p in path]), max([p[1] for p in path])] for path in contours]
-
-    # print(mmc)
 
     for i in range(len(contours)):
         # for each path the goal is to find the points too close to points of previous paths
@@ -305,9 +331,3 @@ def too_close(a, b, min_dist=10):
 app = Poncif_design_tool()
 
 app.mainloop()
-
-# contours = [[[0,0],[0,1],[0,2],[0,3],[0,4]], [[5,0],[10,1],[5,2],[10,3],[5,4]], [[20,0],[20,1],[20,2],[20,3],[20,4]]]
-# print(contours)
-# print("#####")
-# pruned_contours = prune_contours(contours, min_dist=5)
-# print(pruned_contours)
