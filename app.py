@@ -40,12 +40,12 @@ class Poncif_design_tool(tk.Tk):
         self.content.rowconfigure(0, weight=1)
         self.content.rowconfigure(1, weight=1)
         self.content.rowconfigure(2, weight=1)
-        self.content.rowconfigure(3, weight=1)
+        self.content.rowconfigure(3, weight=0)
         self.content.rowconfigure(4, weight=1)
         self.content.rowconfigure(5, weight=1)
 
         # Define button to load an image
-        ctk.CTkButton(master=self.content, text="Choose an image", border_width=2, command=self.load_image).grid(column=1, row=0, sticky="nsew")
+        ctk.CTkButton(master=self.content, text="Choose an image", border_width=5, command=self.load_image).grid(column=1, row=0, sticky="nsew")
 
         # Define the widget to choose canny parameters
         canny_frame = ctk.CTkFrame(master=self.content)
@@ -98,22 +98,22 @@ class Poncif_design_tool(tk.Tk):
         tk.Radiobutton(master=tool_frame, text="Erase", variable=self.tool_var, value=1, image=self.eraser_img, command=self.select_tool).grid(column=1, row=1, sticky="nsew")
 
         # Define the widget to select the resolution
-        resolution_frame = ctk.CTkFrame(master=self.content)
-        resolution_frame.grid(column=1, row=3, sticky="nsew")
-        resolution_frame.rowconfigure(0, weight=1)
-        resolution_frame.rowconfigure(1, weight=1)
-        resolution_frame.columnconfigure(0, weight=1)
-        resolution_frame.columnconfigure(1, weight=1)
-        resolution_frame.columnconfigure(2, weight=1)
-        # Define the widget title
-        ctk.CTkLabel(master=resolution_frame, text="Select resolution").grid(column=0, row=0, columnspan=3, sticky="nsew")
-        # Define the resolution variable
-        self.resolution = tk.IntVar()
-        self.resolution.set(1)
+        # resolution_frame = ctk.CTkFrame(master=self.content)
+        # resolution_frame.grid(column=1, row=3, sticky="nsew")
+        # resolution_frame.rowconfigure(0, weight=1)
+        # resolution_frame.rowconfigure(1, weight=1)
+        # resolution_frame.columnconfigure(0, weight=1)
+        # resolution_frame.columnconfigure(1, weight=1)
+        # resolution_frame.columnconfigure(2, weight=1)
+        # # Define the widget title
+        # ctk.CTkLabel(master=resolution_frame, text="Select resolution").grid(column=0, row=0, columnspan=3, sticky="nsew")
+        # # Define the resolution variable
+        # self.resolution = tk.IntVar()
+        # self.resolution.set(1)
 
-        ctk.CTkLabel(master=resolution_frame, text="Space between holes").grid(column=0, row=1, sticky="nsew")
-        ctk.CTkSlider(master=resolution_frame, from_=1, to=3, number_of_steps=2, variable=self.resolution, command=self.select_resolution).grid(column=1, row=1, sticky="ew")
-        ctk.CTkEntry(master=resolution_frame, placeholder_text=self.resolution.get(), textvariable=self.resolution).grid(column=2, row=1, sticky="ew")
+        # ctk.CTkLabel(master=resolution_frame, text="Space between holes").grid(column=0, row=1, sticky="nsew")
+        # ctk.CTkSlider(master=resolution_frame, from_=1, to=3, number_of_steps=2, variable=self.resolution, command=self.select_resolution).grid(column=1, row=1, sticky="ew")
+        # ctk.CTkEntry(master=resolution_frame, placeholder_text=self.resolution.get(), textvariable=self.resolution).grid(column=2, row=1, sticky="ew")
 
         # Define the widget to specify the tile dimensions
         tile_dimension_frame = ctk.CTkFrame(master=self.content)
@@ -137,7 +137,7 @@ class Poncif_design_tool(tk.Tk):
         ctk.CTkEntry(master=tile_dimension_frame, placeholder_text=self.height.get(), textvariable=self.height).grid(column=1, row=2, sticky="ew")
 
         # Define the start button widget
-        ctk.CTkButton(master=self.content, text="Start", command=self.start).grid(column=1, row=5, sticky="nsew")
+        ctk.CTkButton(master=self.content, text="Start", border_width=5, command=self.start).grid(column=1, row=5, sticky="nsew")
 
         # Define the image canvas to hold the image and the contours
         logging.info(f"Loading default image")
@@ -328,6 +328,8 @@ def too_close(a, b, min_dist=10):
     else:
         return(True)
 
-app = Poncif_design_tool()
 
-app.mainloop()
+if __name__=="__main__":
+    app = Poncif_design_tool()
+
+    app.mainloop()
